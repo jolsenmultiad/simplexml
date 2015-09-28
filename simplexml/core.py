@@ -15,30 +15,30 @@ import re
 from xml.dom.minidom import getDOMImplementation, parseString
 
 def element_from_dict(document, elRoot, data):
-    
+
     if type(data) == list:
         for item in data:
             element_from_dict(document, elRoot, item)
-            
+
         return
-        
+
     for k, v in data.items():
-        
+
         if isinstance(v, dict):
             elem = document.createElement(k)
 
             if '_attrs' in v:
                 for name,value in v["_attrs"].items():
-                    elem.setAttribute(name, str(value))
+                    elem.setAttribute(name, unicode(value))
                 del(v["_attrs"])
-            
+
             if '_value' in v:
                 value = v.get('_value')
-                textNode = document.createCDATASection(value) if isinstance(value, str) and re.search("[\<\>\&]", value) else document.createTextNode(str(value))
+                textNode = document.createCDATASection(value) if isinstance(value, basestring) and re.search("[\<\>\&]", value) else document.createTextNode(unicode(value))
                 elem.appendChild(textNode)
             else:
                 element_from_dict(document, elem, v)
-                
+
             elRoot.appendChild(elem)
         elif isinstance(v, list):
             if k.endswith("s"):
@@ -53,25 +53,25 @@ def element_from_dict(document, elRoot, data):
                     elItem = document.createElement(k)
                     if '_attrs' in item:
                         for name,value in item["_attrs"].items():
-                            elItem.setAttribute(name, str(value))
+                            elItem.setAttribute(name, unicode(value))
                         del(item["_attrs"])
 
                     if '_value' in item:
                         value = item.get('_value')
-                        textNode = document.createCDATASection(value) if isinstance(value, str) and re.search("[\<\>\&]", value) else document.createTextNode(str(value))
+                        textNode = document.createCDATASection(value) if isinstance(value, basestring) and re.search("[\<\>\&]", value) else document.createTextNode(unicode(value))
                         elItem.appendChild(textNode)
                     else:
                         element_from_dict(document, elItem, item)
 
                     elRoot.appendChild(elItem)
-                    
-        elif isinstance(v, str) and re.search("[\<\>\&]", v):
+
+        elif isinstance(v, basestring) and re.search("[\<\>\&]", v):
             elem = document.createElement(k)
             elem.appendChild(document.createCDATASection(v))
             elRoot.appendChild(elem)
         else:
             elem = document.createElement(k)
-            elem.appendChild(document.createTextNode(str(v)))
+            elem.appendChild(document.createTextNode(unicode(v)))
             elRoot.appendChild(elem)
 
 def isNodeList(elem):
@@ -116,7 +116,7 @@ def dict_from_element(element, dic):
     return dic
 
 def dumps(data):
-    
+
     data_items = [(key, values) for key, values in data.items()]
     rootName, rootValue = data_items[0]
     implementation = getDOMImplementation()
@@ -125,9 +125,9 @@ def dumps(data):
     rootNode = document.documentElement
     if type(rootValue) == dict and '_attrs' in rootValue:
         for name,value in rootValue["_attrs"].items():
-            rootNode.setAttribute(name, value)      
+            rootNode.setAttribute(name, value)
         del(rootValue["_attrs"])
-    
+
     element_from_dict(document, rootNode,  rootValue)
 
     return document.toxml()
